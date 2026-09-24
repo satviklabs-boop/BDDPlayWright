@@ -1,4 +1,4 @@
-# ---------- Dependencies ----------
+﻿# ---------- Dependencies ----------
 node_modules/
 .pnp
 .pnp.js
@@ -25,7 +25,12 @@ build/
 
 # ---------- Editor / IDE ----------
 .idea/
-.vscode/
+# Ignore the contents of .vscode EXCEPT settings.json, which carries the
+# shared Cucumber step-definition navigation config (cucumber.glue).
+# NOTE: pattern is .vscode/* (not .vscode/) so the negation below can
+# re-include the file - git cannot re-include a file inside an excluded dir.
+.vscode/*
+!.vscode/settings.json
 *.iml
 *.swp
 
