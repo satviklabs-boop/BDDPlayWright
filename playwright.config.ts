@@ -36,8 +36,23 @@ export default defineConfig({
   reporter: [
     ['list'],
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    // The retry analyser reads this file to separate flaky from genuinely
+    // failing scenarios. Do not remove it.
     ['json', { outputFile: 'test-results/results.json' }],
     ['junit', { outputFile: 'test-results/junit.xml' }],
+    // Allure: the extended report. Because `screenshot`, `video` and `trace`
+    // are all set to "…-on-failure" above, the adapter attaches them to the
+    // failing step automatically - no manual annotate() calls needed.
+    ['allure-playwright', {
+      outputFolder: 'allure-results',
+      detail: true,          // each Gherkin step becomes a sub-step in the report
+      suiteTitle: true,      // group by feature file / describe block
+      environmentInfo: {
+        framework: 'playwright-bdd',
+        app: 'BDDPlayWright',
+        node: process.version,
+      },
+    }],
   ],
 
   use: {

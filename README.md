@@ -280,36 +280,183 @@ All configuration flows through `.env` -> `src/config/env.config.ts` -> the code
 
 After a run you get:
 
-- **HTML report** - `playwright-report/index.html` (open with `npm run report`)
-- **JSON results** - `test-results/results.json`
-- **JUnit XML** - `test-results/junit.xml` (for CI dashboards)
-- **On failure**: screenshot, video, and a full trace
+| Report | Path | Command |
+|---|---|---|
+| **Allure** (extended report) | `allure-report/index.html` | `npm run report:allure` |
+| **Playwright HTML** | `playwright-report/index.html` | `npm run report` |
+| **Retry analyser** | `test-results/retry/retry-report.txt` | `npm run retry:analyse` |
+| **JSON results** | `test-results/results.json` | - |
+| **JUnit XML** | `test-results/junit.xml` | - |
+| **On failure** | screenshot, video, trace | - |
 
+### Allure - the extended report
+
+Allure is the rich, interactive report for this stack: it groups scenarios by
+feature, renders **every Gherkin step as its own sub-step**, and attaches the
+failure screenshot, video and trace to the step that broke.
+
+```bash
+npm test              # runs the suite AND the retry analyser
+npm run report:allure # generate the Allure report and open it
+```
+
+Because `screenshot`, `video` and `trace` are all set to `...-on-failure` in
+`playwright.config.ts`, the adapter attaches them automatically - there are no
+manual `annotate()` calls to maintain.
+
+> **Serve it over HTTP, not `file://`.** Allure is a single-page app that fetches
+> its own data, so opening `index.html` from disk shows an empty shell and logs
+> CORS errors. `npm run report:allure` opens it correctly; `npm run allure:serve`
+> serves the raw results without writing a report at all.
+
+> **Why not Extent Reports?** Extent is a `com.aventstack:extentreports` Java
+> library driven by a Cucumber-**JVM** plugin. This project is TypeScript on Node
+> with `playwright-bdd` - there is no JVM or Maven for it to attach to, so an
+> `extent.properties` file here would do nothing. Allure covers the same ground
+> for Node.
+
+> **Known external limitation - `reqres.in` rate limits (HTTP 429).**
+> The API scenarios target the public demo API `reqres.in`, which throttles
+> automated traffic. Running the suite repeatedly in a short window makes the
+> 8 API scenarios fail with `Expected: 200, Received: 429` while the 8 UI
+> scenarios keep passing. This is the *service* refusing the request, not a
+> defect in the framework or the tests; relaunching later clears it. The retry
+> analyser reports them as **failed**, which is correct - a 429 is
+> deterministic, so retrying cannot fix it - and the message names the status
+> code so the cause is obvious. Point `API_BASE_URL` at a local stub for a
+> suite that does not depend on a shared public sandbox.
+
+## Retry analyser
+
+Playwright already retries failing tests, but it reports a test that passed on
+the **second attempt as a plain green PASS** - which hides the fact that the test
+is unstable. The retry analyser reads `test-results/results.json` after the run
+and separates the three outcomes that actually differ:
+
+| Verdict | Meaning | Build result |
+|---|---|---|
+| **pass** | green on the first attempt | Success |
+| **flaky** | failed, then passed on a retry - real instability | Success, reported loudly |
+| **failed** | never passed, even after every retry | Failure |
+
+```
+$ npm run retry:analyse
+
+Retry analyser report
+=====================
+Retries per test : 1
+Scenarios  : 16
+Passed     : 14  (green on the first attempt)
+Flaky      : 2  (passed only after a retry)
+Failed     : 0  (failed every attempt)
+
+FLAKY - these passed, but only after a retry. They are hiding a
+real instability, so treat them as defects waiting to surface.
+    FLAKY  ui > login.feature > Successful login > logs in
+           attempts: failed -> passed
+```
+
+A flaky pass does **not** break the build by default - the run *is* green, and the
+flakiness is reported for a human to act on. Set `FAIL_ON_FLAKY=true` to make
+flakiness itself a failure.
+
+```bash
+RETRIES=2 npm test               # two retries per test
+RETRIES=0 npm test               # no retries; every failure is genuine
+FAIL_ON_FLAKY=true npm test      # a flaky pass fails the build
+ANALYSE_RETRIES=false npm test   # skip the analyser entirely
+```
+
+`npm test` runs the analyser automatically. `npm run test:ci` is the same chain for CI.
+
+> **Do not pass `--reporter` on the command line.** Any CLI reporter flag
+> *replaces* the reporters in `playwright.config.ts`, so `results.json` is never
+> written and the analyser has nothing to read. Add reporters to the config instead.
+
+### Why the analyser runs even when tests fail
+
+`npm test` does not chain the commands with `&&`. That would short-circuit on the
+first failing test, so the analyser would be skipped **precisely when its verdict
+matters most** - telling flaky (passed on retry) apart from genuinely broken.
+
+The sequencing lives in `scripts/run-with-analyser.mjs` instead. Two reasons:
+
+- `&&` skips the analyser on failure, as above.
+- `;` fixes that on bash, but on Windows the command runs through `cmd`, where
+  `;` separates statements before npm ever sees it - so the chain breaks
+  differently per platform.
+
+The Node runner behaves identically everywhere, always runs the analyser, and
+still exits with the **test** result, so CI fails the build on a real failure.
 ### Inspecting a failure
 
 ```bash
 npx playwright show-trace test-results/<test-folder>/trace.zip
 ```
 
-The trace viewer lets you step through every action, DOM snapshot, and network call.
+The trace viewer steps through every action, DOM snapshot and network call.
 
 ---
 
 ## CI/CD
 
-`.github/workflows/playwright.yml` runs the full suite on every push and pull request to `main`:
+Two pipelines are configured.
 
-1. Checkout the repository
-2. Install Node.js 20
-3. `npm ci` - clean, lockfile-based install
-4. Install Chromium with system dependencies
-5. Run the suite (headless)
-6. Upload the HTML report and test results as artifacts
+### GitHub Actions
 
-Reports are downloadable from the **Actions** tab of any workflow run.
+`.github/workflows/playwright.yml` runs on **push, pull request, manual dispatch,
+and a 3-hourly schedule**:
+
+```yaml
+schedule:
+  - cron: '17 */3 * * *'   # every 3 hours, at :17 past
+```
+
+The offset minute avoids the top-of-the-hour spike when GitHub queues the most
+jobs. The job does: checkout, `npm ci`, install Chromium, `npm run test:ci`, print
+the retry analyser verdict, generate the Allure report, then upload the Allure
+report, raw Allure results, the Playwright HTML report and `test-results/` as
+artefacts.
+
+### Jenkins
+
+`Jenkinsfile` is a declarative pipeline that **runs automatically every 3 hours**:
+
+```groovy
+triggers {
+    cron('H H/3 * * *')
+}
+```
+
+`H H/3 * * *` means *every third hour, at a Jenkins-chosen minute*. `H` hashes the
+value so several jobs do not all fire on the hour - the recommended way to write a
+periodic trigger. It also still runs on push/PR and manual "Build with Parameters".
+
+Stages: checkout, `npm ci`, install Chromium (cached), typecheck, run the suite,
+print the retry analyser verdict, generate Allure, publish reports. A failing test
+marks the build **UNSTABLE** rather than aborting, so the reports are always
+published and triageable.
+
+Parameters let you steer a run without editing the file: `TAGS`, `RETRIES`,
+`WORKERS`, `BASE_URL`, `API_BASE_URL`, `FAIL_ON_FLAKY` and `HEADLESS`.
+
+**Before it will run, Jenkins needs three things:**
+
+- A **NodeJS 20** tool configured in *Manage Jenkins -> Tools*, named `nodejs-20`
+  (or renamed to match the `environment` block)
+- The **Allure Jenkins Plugin** installed, for the `allure` step
+- **Scan Multibranch Pipeline Triggers** enabled (or the job polled) - Jenkins
+  ignores a `cron` in a `Jenkinsfile` until the job has indexed the branch once
+
+Reports and artefacts are archived on every build: the retry analyser output, the
+raw JSON/XML, failure screenshots/videos/traces, and a copy of the generated Allure
+report so a specific build can be reopened later.
+
+> **Note on Extent Reports:** it is a Java/Cucumber-JVM library and has no place in
+> this Node build - see the note under [Reporting](#reporting). Allure is the
+> extended report here.
 
 ---
-
 ## Troubleshooting
 
 **`git`/`node` not recognised (Windows)**

@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  # Run automatically every 3 hours, as a companion to the Jenkins cron.
+  # GitHub-hosted runners are free for public repos; the offset minute (:17)
+  # avoids the top-of-hour spike when GitHub queues the most jobs.
+  schedule:
+    - cron: '17 */3 * * *'
 
 jobs:
   test:
@@ -30,7 +35,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run BDD tests
-        run: npm test
+        run: npm run test:ci
         env:
           CI: true
           HEADLESS: true
@@ -40,14 +45,44 @@ jobs:
           API_BASE_URL: https://reqres.in
           API_KEY: reqres-free-v1
 
-      - name: Upload HTML report
+      # Retry analyser: turns Playwright's raw flaky/passed status into an
+      # explicit verdict, printed in the log and saved as an artefact.
+      - name: Retry analyser verdict
+        if: always()
+        run: |
+          if [ -f test-results/retry/retry-report.txt ]; then
+            cat test-results/retry/retry-report.txt
+          fi
+      # Allure is the extended report for this stack (Extent Reports is a
+      # Java/Cucumber-JVM tool and cannot run on Node). Generating it in the
+      # same job keeps the report beside the run that produced it.
+      - name: Generate Allure report
+        if: always()
+        run: npx allure generate allure-results --clean -o allure-report
+      - name: Upload Playwright HTML report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
-
+      - name: Upload Allure report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: allure-report/
+          if-no-files-found: ignore
+          retention-days: 14
+      # Raw Allure results, so a report can be regenerated or merge from them later.
+      - name: Upload Allure raw results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results/
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
