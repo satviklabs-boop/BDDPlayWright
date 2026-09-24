@@ -1,5 +1,6 @@
-import { Page, Locator } from '@playwright/test';
+﻿import { Page, Locator } from '@playwright/test';
 import { BasePage } from './BasePage.js';
+import { Locators } from '../locators/Locators.js';
 
 /**
  * LoginPage - page object for https://the-internet.herokuapp.com/login
@@ -18,12 +19,12 @@ export class LoginPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.usernameInput = page.locator('#username');
-    this.passwordInput = page.locator('#password');
-    this.loginButton = page.locator('button[type="submit"]');
-    this.flashMessage = page.locator('#flash');
-    this.logoutButton = page.locator('a[href="/logout"]');
-    this.subheader = page.locator('h2');
+    this.usernameInput = page.locator(Locators.Login.USERNAME_FIELD);
+    this.passwordInput = page.locator(Locators.Login.PASSWORD_FIELD);
+    this.loginButton = page.locator(Locators.Login.LOGIN_BUTTON);
+    this.flashMessage = page.locator(Locators.Login.FLASH_MESSAGE);
+    this.logoutButton = page.locator(Locators.Login.LOGOUT_BUTTON);
+    this.subheader = page.locator(Locators.Login.SUBHEADER);
   }
 
   /** Open the login screen. */
@@ -62,6 +63,15 @@ export class LoginPage extends BasePage {
   async isLoggedIn(): Promise<boolean> {
     return this.logoutButton.isVisible();
   }
+  /** True when the logout link is present and visible. */
+  async isLogoutVisible(): Promise<boolean> {
+    return this.logoutButton.isVisible();
+  }
+  /** True when the password input is masked (type="password"). */
+  async isPasswordMasked(): Promise<boolean> {
+    const type = await this.passwordInput.getAttribute('type');
+    return type === 'password';
+  }
 
   /** Read the secure-area heading. */
   async getSecureAreaHeading(): Promise<string> {
@@ -74,3 +84,4 @@ export class LoginPage extends BasePage {
     await this.click(this.logoutButton);
   }
 }
+

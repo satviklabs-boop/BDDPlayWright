@@ -1,4 +1,4 @@
-import { createBdd } from 'playwright-bdd';
+﻿import { createBdd } from 'playwright-bdd';
 import { expect } from '@playwright/test';
 import { test } from '../fixtures/test.fixtures.js';
 
@@ -55,14 +55,14 @@ Then('an error message should be displayed', async ({ loginPage }) => {
   expect(flash).toMatch(/your (username|password) is invalid/);
 });
 
-Then('a logout option should be available', async ({ page }) => {
-  await expect(page.locator('a[href="/logout"]')).toBeVisible();
+Then('a logout option should be available', async ({ loginPage }) => {
+  expect(await loginPage.isLogoutVisible()).toBe(true);
 });
 
 Then('I should be redirected back to the login page', async ({ loginPage }) => {
   await expect(loginPage.getPage()).toHaveURL(/\/login$/);
 });
 
-Then('the password field should be masked', async ({ page }) => {
-  await expect(page.locator('#password')).toHaveAttribute('type', 'password');
+Then('the password field should be masked', async ({ loginPage }) => {
+  expect(await loginPage.isPasswordMasked()).toBe(true);
 });
