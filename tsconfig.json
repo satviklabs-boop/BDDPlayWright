@@ -1,4 +1,4 @@
-{
+﻿{
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
@@ -19,6 +19,7 @@
     "baseUrl": ".",
     "paths": {
       "@pages/*": ["src/pages/*"],
+      "@locators/*": ["src/locators/*"],
       "@api/*": ["src/api/*"],
       "@utils/*": ["src/utils/*"],
       "@config/*": ["src/config/*"],
