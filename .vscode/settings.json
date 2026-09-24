@@ -1,0 +1,18 @@
+﻿{
+  // Cucumber step-definition navigation for VS Code.
+  //
+  // These settings let a Gherkin step link to the TypeScript function that
+  // implements it, so Ctrl+Click (or F12) on a step in a .feature file jumps
+  // straight to the matching Given/When/Then in src/steps.
+  //
+  // Two keys are set on purpose, one per extension:
+  //   - "cucumber.glue"              -> official "Cucumber" extension
+  //   - "cucumberautocomplete.steps" -> "Cucumber (Gherkin) Full Support"
+  // Install either one; both will resolve the same files.
+  //
+  // Note: the step files live in src/steps, NOT under features/, so the
+  // extension defaults would not find them without this explicit glue path.
+  "cucumber.glue": ["src/steps/**/*.ts"],
+  "cucumberautocomplete.steps": ["src/steps/**/*.ts"],
+  "cucumberautocomplete.syncfeatures": "features/**/*.feature"
+}
