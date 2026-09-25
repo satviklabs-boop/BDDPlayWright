@@ -1,12 +1,13 @@
 ﻿import { Page, Locator } from '@playwright/test';
 import { BasePage } from './BasePage.js';
-import { Locators } from '../locators/Locators.js';
+import { By as LoginBy } from '../locators/ByLoginLocators.js';
 /**
  * LoginPage - page object for https://the-internet.herokuapp.com/login
  *
  * Encapsulates every locator and user action for the login screen so that
  * step definitions stay declarative and locator changes are made in one place.
- * Selectors themselves come from the central Locators store (Locators.text).
+ * Selectors themselves come from ByLoginLocators, which reads
+ * Locators/reads_CustomLogin.csv once at module load.
  */
 export class LoginPage extends BasePage {
   // ----- Locators -----
@@ -18,12 +19,12 @@ export class LoginPage extends BasePage {
   private readonly subheader: Locator;
   constructor(page: Page) {
     super(page);
-    this.usernameInput = page.locator(Locators.Login.USERNAME_FIELD);
-    this.passwordInput = page.locator(Locators.Login.PASSWORD_FIELD);
-    this.loginButton = page.locator(Locators.Login.LOGIN_BUTTON);
-    this.flashMessage = page.locator(Locators.Login.FLASH_MESSAGE);
-    this.logoutButton = page.locator(Locators.Login.LOGOUT_BUTTON);
-    this.subheader = page.locator(Locators.Login.SUBHEADER);
+    this.usernameInput = page.locator(LoginBy.USERNAME_FIELD);
+    this.passwordInput = page.locator(LoginBy.PASSWORD_FIELD);
+    this.loginButton = page.locator(LoginBy.LOGIN_BUTTON);
+    this.flashMessage = page.locator(LoginBy.FLASH_MESSAGE);
+    this.logoutButton = page.locator(LoginBy.LOGOUT_BUTTON);
+    this.subheader = page.locator(LoginBy.SUBHEADER);
   }
   /** Open the login screen. */
   async open(): Promise<void> {
