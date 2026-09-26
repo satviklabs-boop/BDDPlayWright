@@ -12,7 +12,7 @@ import { config } from './tests/Routine/config.js';
 
 const testDir = defineBddConfig({
   features: 'tests/features/**/*.feature',
-  steps: ['tests/steps/**/*.ts', 'tests/Routine/fixtures.ts'],
+  steps: ['tests/steps/**/*.ts', 'tests/Routine/GenericFunction.ts'],
   quotes: 'single',
 });
 

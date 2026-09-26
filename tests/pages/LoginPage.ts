@@ -6,7 +6,7 @@ import { GenericFunction } from '../Routine/GenericFunction.js';
  *
  * Selectors come from tests/locators/Login.csv - a UI change means editing one CSV row.
  * To add a new page: create tests/locators/<Page>.csv, copy this file,
- * then register it in tests/Routine/fixtures.ts.
+ * then register it in GenericFunction.Fixtures() (tests/Routine/GenericFunction.ts).
  */
 export class LoginPage {
   // ----- Locators -----

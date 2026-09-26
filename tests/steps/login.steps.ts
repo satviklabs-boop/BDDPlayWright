@@ -1,5 +1,5 @@
 ﻿import { expect } from '@playwright/test';
-import { Given, When, Then } from '../Routine/fixtures.js';
+import { Given, When, Then } from '../Routine/GenericFunction.js';
 
 // ---------- GIVEN ----------
 Given('the login page is open', async ({ loginPage, page }) => {

@@ -1,17 +1,43 @@
 import { Page, Locator } from '@playwright/test';
+import { test as base, createBdd } from 'playwright-bdd';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { LoginPage } from '../pages/LoginPage.js';
 
 /**
  * GenericFunction - everything shared by all pages and steps:
- *   1. readLocators()  - reads selectors from tests/locators/<Page>.csv
- *   2. browser actions - click, enterText, getText, ...
+ *   1. Fixtures()      - the objects every step can ask for (loginPage, genericFunction)
+ *   2. readLocators()  - reads selectors from tests/locators/<Page>.csv
+ *   3. browser actions - click, enterText, getText, ...
  *
- * Usage in a page:   const loc = GenericFunction.readLocators('Login');
- * Usage in a step:   await genericFunction.click(loginPage.loginButton);
+ * Usage in a step file:  import { Given, When, Then } from '../Routine/GenericFunction.js';
+ * Usage in a page:       const loc = GenericFunction.readLocators('Login');
+ * Usage in a step:       await genericFunction.click(loginPage.loginButton);
  */
 export class GenericFunction {
   constructor(private readonly page: Page) { }
+
+  // ===================== Fixtures =====================
+
+  /**
+   * Defines the fixtures - objects Playwright creates fresh for every scenario
+   * and hands to any step that names them, e.g.  async ({ loginPage }) => { ... }
+   *
+   * To add a page: add its type in < > and one line below that creates it.
+   */
+  static Fixtures() {
+    return base.extend<{
+      loginPage: LoginPage;
+      genericFunction: GenericFunction;
+    }>({
+      loginPage: async ({ page }, use) => {
+        await use(new LoginPage(page));
+      },
+      genericFunction: async ({ page }, use) => {
+        await use(new GenericFunction(page));
+      },
+    });
+  }
 
   // ===================== Locators =====================
 
@@ -100,3 +126,9 @@ export class GenericFunction {
     await this.page.screenshot({ path: `test-results/screenshots/${name}.png`, fullPage: true });
   }
 }
+
+// ===================== Step keywords =====================
+// Built once from the fixtures above. Every step file imports these.
+// Test data lives in the feature files (Examples tables), not here.
+export const test = GenericFunction.Fixtures();
+export const { Given, When, Then } = createBdd(test);

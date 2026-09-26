@@ -164,8 +164,7 @@ BDDPlayWright/
 │   │   └── Login.csv
 │   └── Routine/                # 5. Shared code
 │       ├── config.ts           #    URLs + run settings (reads .env)
-│       ├── GenericFunction.ts  #    readLocators() + reusable actions (click, enterText...)
-│       ├── fixtures.ts         #    Given/When/Then + fixtures
+│       ├── GenericFunction.ts  #    Fixtures() + Given/When/Then + readLocators() + actions
 │       ├── retry-analyser.ts   #    flaky vs failed report
 │       └── run-tests.mjs       #    runs tests, then the analyser
 │
@@ -210,7 +209,7 @@ Feature: User login
 In `tests/steps/`:
 
 ```typescript
-import { When } from '../Routine/fixtures.js';
+import { When } from '../Routine/GenericFunction.js';
 
 When('I login with username {string} and password {string}', async ({ loginPage }, username: string, password: string) => {
   await loginPage.login(username, password);
@@ -242,7 +241,22 @@ export class DashboardPage {
 }
 ```
 
-Then register it as a fixture in `tests/Routine/fixtures.ts` (one line).
+Then register it in `GenericFunction.Fixtures()` in `tests/Routine/GenericFunction.ts`:
+
+```typescript
+static Fixtures() {
+  return base.extend<{
+    loginPage: LoginPage;
+    genericFunction: GenericFunction;
+    dashboardPage: DashboardPage;                 // 1. add the type
+  }>({
+    ...
+    dashboardPage: async ({ page }, use) => {      // 2. add how to create it
+      await use(new DashboardPage(page));
+    },
+  });
+}
+```
 
 ### Using pre-defined fixtures
 

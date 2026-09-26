@@ -1,5 +1,5 @@
 import { expect, APIResponse } from '@playwright/test';
-import { Given, When, Then } from '../Routine/fixtures.js';
+import { Given, When, Then } from '../Routine/GenericFunction.js';
 
 /**
  * API steps use Playwright's built-in `request` fixture.
