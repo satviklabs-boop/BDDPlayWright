@@ -1,8 +1,5 @@
-﻿import { createBdd } from 'playwright-bdd';
-import { expect } from '@playwright/test';
-import { test } from '../fixtures/test.fixtures.js';
-
-const { Given, When, Then } = createBdd(test);
+﻿import { expect } from '@playwright/test';
+import { Given, When, Then } from '../support/fixtures.js';
 
 // ---------- GIVEN ----------
 Given('the login page is open', async ({ loginPage, page }) => {
@@ -11,10 +8,6 @@ Given('the login page is open', async ({ loginPage, page }) => {
 });
 
 // ---------- WHEN ----------
-When('I login with valid credentials', async ({ loginPage, testData }) => {
-  await loginPage.login(testData.validUser.username, testData.validUser.password);
-});
-
 When(
   'I login with username {string} and password {string}',
   async ({ loginPage }, username: string, password: string) => {
@@ -23,21 +16,21 @@ When(
 );
 
 When('I enter the password {string}', async ({ loginPage }, password: string) => {
-  await loginPage.typePassword(password);
+  await loginPage.password.fill(password);
 });
 
 When('I log out', async ({ loginPage }) => {
-  await loginPage.logOut();
+  await loginPage.logout.click();
 });
 
 // ---------- THEN ----------
 Then('I should be redirected to the secure area', async ({ loginPage }) => {
-  expect(await loginPage.isLoggedIn()).toBe(true);
-  expect(await loginPage.headingText()).toBe('Secure Area');
+  await expect(loginPage.logout).toBeVisible();
+  await expect(loginPage.heading).toHaveText('Secure Area');
 });
 
-Then('I should remain on the login page', async ({ loginPage }) => {
-  expect(loginPage.url).toMatch(/\/login$/);
+Then('I should remain on the login page', async ({ page }) => {
+  expect(page.url()).toMatch(/\/login$/);
 });
 
 Then('the success message should be displayed', async ({ loginPage }) => {
@@ -61,5 +54,5 @@ Then('I should be redirected back to the login page', async ({ page }) => {
 });
 
 Then('the password field should be masked', async ({ loginPage }) => {
-  expect(await loginPage.isPasswordMasked()).toBe(true);
+  await expect(loginPage.password).toHaveAttribute('type', 'password');
 });

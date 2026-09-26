@@ -1,70 +1,55 @@
-import { createBdd } from 'playwright-bdd';
 import { expect, APIResponse } from '@playwright/test';
-import { test } from '../fixtures/test.fixtures.js';
-import { ApiClient } from '../api/ApiClient.js';
-
-const { Given, When, Then } = createBdd(test);
+import { Given, When, Then } from '../support/fixtures.js';
 
 /**
- * The last API response is stored here for the Then-steps to assert against.
- * playwright-bdd runs each scenario in its own worker/context, so a module
- * level variable is safe enough for this demonstration; a fixture-based
- * state object is the next step for larger suites.
+ * API steps use Playwright's built-in `request` fixture.
+ * The base URL comes from the "api" project in playwright.config.ts.
  */
 let lastResponse: APIResponse;
 
 // ---------- GIVEN ----------
 
-Given('the API base URL is configured', async ({ apiClient }) => {
-  // Sanity check that the client was built from real configuration.
-  expect(apiClient).toBeInstanceOf(ApiClient);
+Given('the API base URL is configured', async ({ baseURL }) => {
+  expect(baseURL).toBeTruthy();
 });
 
 // ---------- WHEN ----------
 
-When('I send a POST login request with valid API credentials', async ({ apiClient, testData }) => {
-  lastResponse = await apiClient.post('/api/login', testData.apiLogin);
-});
-
-When('I send a POST login request with valid credentials', async ({ apiClient, testData }) => {
-  lastResponse = await apiClient.post('/api/login', testData.apiLogin);
-});
-
-When('I send a POST login request with email {string} but no password', async ({ apiClient }, email: string) => {
-  lastResponse = await apiClient.post('/api/login', { email });
+When('I send a POST login request with email {string} but no password', async ({ request }, email: string) => {
+  lastResponse = await request.post('/api/login', { data: { email } });
 });
 
 When(
   'I send a POST login request with email {string} and password {string}',
-  async ({ apiClient }, email: string, password: string) => {
-    lastResponse = await apiClient.post('/api/login', { email, password });
+  async ({ request }, email: string, password: string) => {
+    lastResponse = await request.post('/api/login', { data: { email, password } });
   },
 );
 
-When('I request the user with id {int}', async ({ apiClient }, id: number) => {
-  lastResponse = await apiClient.get(`/api/users/${id}`);
+When('I request the user with id {int}', async ({ request }, id: number) => {
+  lastResponse = await request.get(`/api/users/${id}`);
 });
 
 When(
   'I create a user with name {string} and job {string}',
-  async ({ apiClient }, name: string, job: string) => {
-    lastResponse = await apiClient.post('/api/users', { name, job });
+  async ({ request }, name: string, job: string) => {
+    lastResponse = await request.post('/api/users', { data: { name, job } });
   },
 );
 
 When(
   'I update the user with id {int} with name {string} and job {string}',
-  async ({ apiClient }, id: number, name: string, job: string) => {
-    lastResponse = await apiClient.put(`/api/users/${id}`, { name, job });
+  async ({ request }, id: number, name: string, job: string) => {
+    lastResponse = await request.put(`/api/users/${id}`, { data: { name, job } });
   },
 );
 
-When('I delete the user with id {int}', async ({ apiClient }, id: number) => {
-  lastResponse = await apiClient.delete(`/api/users/${id}`);
+When('I delete the user with id {int}', async ({ request }, id: number) => {
+  lastResponse = await request.delete(`/api/users/${id}`);
 });
 
-When('I request page {int} of the users list', async ({ apiClient }, page: number) => {
-  lastResponse = await apiClient.get('/api/users', { page });
+When('I request page {int} of the users list', async ({ request }, page: number) => {
+  lastResponse = await request.get('/api/users', { params: { page } });
 });
 
 // ---------- THEN ----------

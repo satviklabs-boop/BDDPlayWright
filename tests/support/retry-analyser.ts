@@ -14,7 +14,10 @@
  */
 
 import fs from 'node:fs';
-import { config } from '../config/env.config';
+import 'dotenv/config';
+
+const enabled = (process.env.ANALYSE_RETRIES ?? 'true') === 'true';
+const failOnFlaky = process.env.FAIL_ON_FLAKY === 'true';
 
 const REPORT_FILE = 'test-results/results.json';
 const OUTPUT_DIR = 'test-results/retry';
@@ -96,7 +99,7 @@ function renderReport(scenarios: Scenario[]): string {
 }
 
 function main(): void {
-  if (!config.retryAnalyser.enabled) {
+  if (!enabled) {
     console.log('[retry-analyser] Disabled (ANALYSE_RETRIES=false) - skipping.');
     return;
   }
@@ -123,7 +126,7 @@ function main(): void {
   const failed = scenarios.filter((s) => s.verdict === 'failed').length;
   const flaky = scenarios.filter((s) => s.verdict === 'flaky').length;
   if (failed > 0) process.exitCode = 1;
-  else if (flaky > 0 && config.retryAnalyser.failOnFlaky) process.exitCode = 1;
+  else if (flaky > 0 && failOnFlaky) process.exitCode = 1;
 }
 
 main();

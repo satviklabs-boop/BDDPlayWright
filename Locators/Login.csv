@@ -1,6 +1,0 @@
-﻿usernameField,#username
-passwordField,#password
-loginButton,button[type="submit"]
-flashMessage,#flash
-logoutButton,a[href="/logout"]
-subheader,h2

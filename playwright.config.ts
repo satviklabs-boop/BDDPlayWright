@@ -1,31 +1,34 @@
 /**
- * Playwright configuration for the BDD framework.
- * Uses playwright-bdd to generate Playwright tests from Gherkin .feature files.
+ * Playwright configuration. All settings come from .env (see .env.example).
  *
- * Two projects:
- *   - ui-chromium : browser-driven UI tests (login flows)
- *   - api         : pure HTTP API tests (no browser)
+ * Two projects, picked by the tag on each feature file:
+ *   - ui-chromium : features tagged @ui  (browser)
+ *   - api         : features tagged @api (HTTP only)
  */
+import 'dotenv/config';
 import { defineConfig, devices } from '@playwright/test';
 import { defineBddConfig } from 'playwright-bdd';
-import { config } from './src/config/env.config.js';
 
-const uiTestDir = defineBddConfig({
-  outputDir: '.features-gen/ui',
-  features: ['features/ui/**/*.feature'],
-  steps: ['src/steps/**/*.ts', 'src/fixtures/**/*.ts'],
-  quotes: 'single',
-});
+const env = process.env;
+const config = {
+  ui: { baseUrl: env.BASE_URL ?? 'https://the-internet.herokuapp.com' },
+  api: { baseUrl: env.API_BASE_URL ?? 'https://reqres.in' },
+  run: {
+    headless: (env.HEADLESS ?? 'true') === 'true',
+    workers: Number(env.WORKERS) || 2,
+    retries: Number(env.RETRIES ?? 1),
+    slowMo: Number(env.SLOW_MO) || 0,
+  },
+};
 
-const apiTestDir = defineBddConfig({
-  outputDir: '.features-gen/api',
-  features: ['features/api/**/*.feature'],
-  steps: ['src/steps/**/*.ts', 'src/fixtures/**/*.ts'],
+const testDir = defineBddConfig({
+  features: 'tests/features/**/*.feature',
+  steps: ['tests/steps/**/*.ts', 'tests/support/fixtures.ts'],
   quotes: 'single',
 });
 
 export default defineConfig({
-  testDir: '.',
+  testDir,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: config.run.retries,
@@ -74,7 +77,7 @@ export default defineConfig({
   projects: [
     {
       name: 'ui-chromium',
-      testDir: uiTestDir,
+      grep: /@ui/,
       use: {
         ...devices['Desktop Chrome'],
         channel: 'chromium',
@@ -82,9 +85,10 @@ export default defineConfig({
     },
     {
       name: 'api',
-      testDir: apiTestDir,
+      grep: /@api/,
       use: {
         baseURL: config.api.baseUrl,
+        extraHTTPHeaders: { Accept: 'application/json' },
       },
     },
   ],

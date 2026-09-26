@@ -35,7 +35,7 @@ using a clean layered architecture.
 | **UI Testing** | Real-browser login tests via Playwright (Chromium) |
 | **API Testing** | HTTP request tests with no browser overhead |
 | **Page Object Model** | Locators and actions encapsulated in page classes |
-| **Custom Fixtures** | Dependency-injected page objects, API client, and test data |
+| **Custom Fixtures** | Dependency-injected page objects and test data |
 | **Scenario Outlines** | Data-driven tests via Gherkin `Examples` tables |
 | **Tagging** | `@smoke`, `@regression`, `@negative`, etc. for selective runs |
 | **Reporting** | HTML, JSON, JUnit, and trace/screenshot/video on failure |
@@ -135,7 +135,7 @@ You should see **16 passing tests** (8 UI + 8 API).
 
 ```bash
 # Run a single feature file
-npx bddgen && npx playwright test features/ui/login.feature
+npx bddgen && npx playwright test tests/features/login.feature
 
 # Run by scenario title
 npx bddgen && npx playwright test --grep "Successful login"
@@ -151,30 +151,19 @@ $env:BASE_URL="https://staging.example.com"; npm test # Windows PowerShell
 
 ```
 BDDPlayWright/
-├── features/                   # Gherkin specifications
-│   ├── ui/
-│   │   └── login.feature       # UI login scenarios
-│   └── api/
-│       └── auth-api.feature    # API scenarios
-│
-├── src/
-│   ├── api/
-│   │   └── ApiClient.ts        # HTTP wrapper (GET/POST/PUT/PATCH/DELETE)
-│   ├── config/
-│   │   └── env.config.ts       # Central config loader
-│   ├── fixtures/
-│   │   └── test.fixtures.ts    # Custom BDD fixtures
-│   ├── pages/
-│   │   ├── BasePage.ts         # Shared page helpers
-│   │   └── LoginPage.ts        # Login page object
-│   ├── steps/
-│   │   ├── login.steps.ts      # UI step definitions
-│   │   └── api.steps.ts        # API step definitions
-│   └── utils/
-│       └── tags.ts             # Tag vocabulary + helpers
-│
-├── test-data/
-│   └── users.json              # Test data
+├── tests/
+│   ├── features/               # 1. WHAT to test (Gherkin)
+│   │   ├── login.feature       #    @ui  -> runs in the browser
+│   │   └── auth-api.feature    #    @api -> runs as HTTP only
+│   ├── steps/                  # 2. HOW each Gherkin line runs
+│   │   ├── login.steps.ts
+│   │   └── api.steps.ts
+│   ├── pages/                  # 3. Page objects (locators + actions)
+│   │   └── LoginPage.ts
+│   └── support/                # 4. Plumbing
+│       ├── fixtures.ts         #    Given/When/Then, page fixtures, test data
+│       ├── retry-analyser.ts   #    flaky vs failed report
+│       └── run-tests.mjs       #    runs tests, then the analyser
 │
 ├── .github/workflows/
 │   └── playwright.yml          # CI pipeline
@@ -191,7 +180,8 @@ BDDPlayWright/
 
 ### 1. Write the feature file
 
-Business-readable Gherkin in `features/ui/` or `features/api/`:
+Business-readable Gherkin in `tests/features/`. Tag the feature `@ui` (browser) or `@api` (HTTP only).
+Test data goes in the `Examples:` table. Add a row to add a test case, with no code changes:
 
 ```gherkin
 @ui @login
@@ -201,42 +191,47 @@ Feature: User login
     Given the login page is open
 
   @smoke @positive
-  Scenario: Successful login with valid credentials
-    When I login with valid credentials
+  Scenario Outline: Successful login with valid credentials
+    When I login with username "<username>" and password "<password>"
     Then I should be redirected to the secure area
     And the success message should be displayed
+
+    Examples:
+      | username | password             |
+      | tomsmith | SuperSecretPassword! |
 ```
 
 ### 2. Implement the steps
 
-In `src/steps/`:
+In `tests/steps/`:
 
 ```typescript
-import { createBdd } from 'playwright-bdd';
-import { test } from '../fixtures/test.fixtures.js';
+import { When } from '../support/fixtures.js';
 
-const { Given, When, Then } = createBdd(test);
-
-When('I login with valid credentials', async ({ loginPage, testData }) => {
-  await loginPage.login(testData.validUser.username, testData.validUser.password);
+When('I login with username {string} and password {string}', async ({ loginPage }, username: string, password: string) => {
+  await loginPage.login(username, password);
 });
 ```
 
 ### 3. Add page objects as needed
 
-In `src/pages/`, extend `BasePage` and keep **all locators private**:
+In `tests/pages/`. Locators are defined at the top of the class, with no separate locator files:
 
 ```typescript
-export class DashboardPage extends BasePage {
-  private readonly welcomeBanner = this.page.locator('.welcome');
+export class DashboardPage {
+  readonly welcomeBanner: Locator;
 
-  async open(): Promise<void> {
-    await this.goto('/dashboard');
+  constructor(private readonly page: Page) {
+    this.welcomeBanner = page.locator('.welcome');
+  }
+
+  async open() {
+    await this.page.goto('/dashboard');
   }
 }
 ```
 
-Then register the new page object as a fixture in `src/fixtures/test.fixtures.ts`.
+Then register it as a fixture in `tests/support/fixtures.ts` (one line).
 
 ### Using pre-defined fixtures
 
@@ -247,14 +242,13 @@ Every scenario can request these without any setup:
 | `page` | Playwright `Page` | Browser page |
 | `request` | Playwright `APIRequestContext` | HTTP client |
 | `loginPage` | `LoginPage` | UI login page object |
-| `apiClient` | `ApiClient` | Configured API client |
-| `testData` | `users.json` | Shared test data |
+
 
 ---
 
 ## Configuration
 
-All configuration flows through `.env` -> `src/config/env.config.ts` -> the code.
+All configuration flows through `.env` -> `playwright.config.ts`.
 
 | Variable | Default | Description |
 |---|---|---|
@@ -379,7 +373,7 @@ ANALYSE_RETRIES=false npm test   # skip the analyser entirely
 first failing test, so the analyser would be skipped **precisely when its verdict
 matters most** - telling flaky (passed on retry) apart from genuinely broken.
 
-The sequencing lives in `scripts/run-with-analyser.mjs` instead. Two reasons:
+The sequencing lives in `tests/support/run-tests.mjs` instead. Two reasons:
 
 - `&&` skips the analyser on failure, as above.
 - `;` fixes that on bash, but on Windows the command runs through `cmd`, where
