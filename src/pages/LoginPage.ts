@@ -1,76 +1,77 @@
 ﻿import { Page, Locator } from '@playwright/test';
-import { BasePage } from './BasePage.js';
-import { By as LoginBy } from '../locators/ByLoginLocators.js';
+import { readLocators } from '../locators/locators.js';
+
 /**
- * LoginPage - page object for https://the-internet.herokuapp.com/login
+ * LoginPage - everything the login screen can do.
  *
- * Encapsulates every locator and user action for the login screen so that
- * step definitions stay declarative and locator changes are made in one place.
- * Selectors themselves come from ByLoginLocators, which reads
- * Locators/reads_CustomLogin.csv once at module load.
+ * Selectors come from Locators/reads_CustomLogin.csv, so a UI change means
+ * editing one CSV row instead of hunting through this file.
+ *
+ * To add another page: copy this file, change the page name passed to
+ * readLocators() and the steps you want. No base class, no extra wiring.
  */
-export class LoginPage extends BasePage {
-  // ----- Locators -----
-  private readonly usernameInput: Locator;
-  private readonly passwordInput: Locator;
-  private readonly loginButton: Locator;
-  private readonly flashMessage: Locator;
-  private readonly logoutButton: Locator;
-  private readonly subheader: Locator;
-  constructor(page: Page) {
-    super(page);
-    this.usernameInput = page.locator(LoginBy.USERNAME_FIELD);
-    this.passwordInput = page.locator(LoginBy.PASSWORD_FIELD);
-    this.loginButton = page.locator(LoginBy.LOGIN_BUTTON);
-    this.flashMessage = page.locator(LoginBy.FLASH_MESSAGE);
-    this.logoutButton = page.locator(LoginBy.LOGOUT_BUTTON);
-    this.subheader = page.locator(LoginBy.SUBHEADER);
+export class LoginPage {
+  constructor(private readonly page: Page) {}
+
+  // ----- Elements (CSV read once per process) -----
+  private readonly by = readLocators('Login');
+  private el(name: string): Locator {
+    return this.page.locator(this.by[name]);
   }
-  /** Open the login screen. */
-  async open(): Promise<void> {
-    await this.goto('/login');
+
+  get username() { return this.el('usernamefield'); }
+  get password() { return this.el('passwordfield'); }
+  get loginButton() { return this.el('loginbutton'); }
+  get flash() { return this.el('flashmessage'); }
+  get logout() { return this.el('logoutbutton'); }
+  get heading() { return this.el('subheader').first(); }
+
+  // ----- Actions -----
+  async open() {
+    await this.page.goto('/login');
   }
-  /** Type credentials (individually, so steps can do partial fills). */
-  async enterUsername(username: string): Promise<void> {
-    await this.fill(this.usernameInput, username);
+
+  async typeUsername(value: string) {
+    await this.username.fill(value);
   }
-  async enterPassword(password: string): Promise<void> {
-    await this.fill(this.passwordInput, password);
+
+  async typePassword(value: string) {
+    await this.password.fill(value);
   }
-  /** Click the submit button. */
-  async submit(): Promise<void> {
-    await this.click(this.loginButton);
+
+  async clickLogin() {
+    await this.loginButton.click();
   }
-  /** Full happy-path action: fill both fields and submit. */
-  async login(username: string, password: string): Promise<void> {
-    await this.enterUsername(username);
-    await this.enterPassword(password);
-    await this.submit();
+
+  async login(username: string, password: string) {
+    await this.typeUsername(username);
+    await this.typePassword(password);
+    await this.clickLogin();
   }
-  /** Text of the flash banner (success or error). */
-  async getFlashMessage(): Promise<string> {
-    await this.flashMessage.waitFor({ state: 'visible' });
-    return (await this.flashMessage.innerText()).trim();
+
+  async logOut() {
+    await this.logout.click();
   }
-  /** True when the secure area is displayed (login actually succeeded). */
+
+  // ----- Reads -----
+  async flashText(): Promise<string> {
+    await this.flash.waitFor({ state: 'visible' });
+    return (await this.flash.innerText()).trim();
+  }
+
+  async headingText(): Promise<string> {
+    return (await this.heading.innerText()).trim();
+  }
+
+  get url(): string {
+    return this.page.url();
+  }
+
   async isLoggedIn(): Promise<boolean> {
-    return this.logoutButton.isVisible();
+    return this.logout.isVisible();
   }
-  /** Check the password field is masked. */
+
   async isPasswordMasked(): Promise<boolean> {
-    return (await this.passwordInput.getAttribute('type')) === 'password';
-  }
-  /** Locator for the logout link, for step-level assertions. */
-  logoutLink(): Locator {
-    return this.logoutButton;
-  }
-  /** Read the secure-area heading. */
-  async getSecureAreaHeading(): Promise<string> {
-    await this.subheader.first().waitFor({ state: 'visible' });
-    return (await this.subheader.first().innerText()).trim();
-  }
-  /** Log out of the secure area. */
-  async logout(): Promise<void> {
-    await this.click(this.logoutButton);
+    return (await this.password.getAttribute('type')) === 'password';
   }
 }

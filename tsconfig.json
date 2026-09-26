@@ -15,17 +15,7 @@
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
-    "paths": {
-      "@pages/*": ["src/pages/*"],
-      "@locators/*": ["src/locators/*"],
-      "@api/*": ["src/api/*"],
-      "@utils/*": ["src/utils/*"],
-      "@config/*": ["src/config/*"],
-      "@fixtures/*": ["src/fixtures/*"],
-      "@testdata/*": ["test-data/*"]
-    }
+    "allowSyntheticDefaultImports": true
   },
   "include": ["src/**/*.ts", "*.ts"],
   "exclude": ["node_modules", "playwright-report", "test-results", ".features-gen"]

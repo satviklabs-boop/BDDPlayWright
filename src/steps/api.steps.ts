@@ -64,7 +64,7 @@ When('I delete the user with id {int}', async ({ apiClient }, id: number) => {
 });
 
 When('I request page {int} of the users list', async ({ apiClient }, page: number) => {
-  lastResponse = await apiClient.get('/api/users', { params: { page } });
+  lastResponse = await apiClient.get('/api/users', { page });
 });
 
 // ---------- THEN ----------

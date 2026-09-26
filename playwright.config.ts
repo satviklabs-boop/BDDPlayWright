@@ -28,9 +28,9 @@ export default defineConfig({
   testDir: '.',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: config.execution.retries,
-  workers: config.execution.workers,
-  timeout: config.execution.defaultTimeout,
+  retries: config.run.retries,
+  workers: config.run.workers,
+  timeout: 30_000,
   expect: { timeout: 10_000 },
 
   reporter: [
@@ -57,7 +57,7 @@ export default defineConfig({
 
   use: {
     baseURL: config.ui.baseUrl,
-    headless: config.execution.headless,
+    headless: config.run.headless,
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
     screenshot: 'only-on-failure',
@@ -66,7 +66,7 @@ export default defineConfig({
     actionTimeout: 15_000,
     navigationTimeout: 30_000,
     launchOptions: {
-      slowMo: config.execution.slowMo,
+      slowMo: config.run.slowMo,
       args: ['--disable-dev-shm-usage'],
     },
   },
