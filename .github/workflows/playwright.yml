@@ -40,10 +40,7 @@ jobs:
           CI: true
           HEADLESS: true
           BASE_URL: https://the-internet.herokuapp.com
-          UI_USERNAME: tomsmith
-          UI_PASSWORD: SuperSecretPassword!
           API_BASE_URL: https://reqres.in
-          API_KEY: reqres-free-v1
 
       # Retry analyser: turns Playwright's raw flaky/passed status into an
       # explicit verdict, printed in the log and saved as an artefact.

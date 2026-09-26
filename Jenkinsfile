@@ -99,7 +99,6 @@ pipeline {
         // Retry analyser settings.
         ANALYSE_RETRIES = 'true'
         FAIL_ON_FLAKY   = "${params.FAIL_ON_FLAKY ? 'true' : 'false'}"
-        RETRY_OUTPUT_DIR = 'test-results/retry'
     }
 
     stages {

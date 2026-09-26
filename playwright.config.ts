@@ -1,25 +1,14 @@
 /**
- * Playwright configuration. All settings come from .env (see .env.example).
+ * Playwright configuration.
+ * URLs and run settings come from tests/Routine/config.ts (which reads .env).
  *
  * Two projects, picked by the tag on each feature file:
  *   - ui-chromium : features tagged @ui  (browser)
  *   - api         : features tagged @api (HTTP only)
  */
-import 'dotenv/config';
 import { defineConfig, devices } from '@playwright/test';
 import { defineBddConfig } from 'playwright-bdd';
-
-const env = process.env;
-const config = {
-  ui: { baseUrl: env.BASE_URL ?? 'https://the-internet.herokuapp.com' },
-  api: { baseUrl: env.API_BASE_URL ?? 'https://reqres.in' },
-  run: {
-    headless: (env.HEADLESS ?? 'true') === 'true',
-    workers: Number(env.WORKERS) || 2,
-    retries: Number(env.RETRIES ?? 1),
-    slowMo: Number(env.SLOW_MO) || 0,
-  },
-};
+import { config } from './tests/Routine/config.js';
 
 const testDir = defineBddConfig({
   features: 'tests/features/**/*.feature',
@@ -31,8 +20,8 @@ export default defineConfig({
   testDir,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: config.run.retries,
-  workers: config.run.workers,
+  retries: config.retries,
+  workers: config.workers,
   timeout: 30_000,
   expect: { timeout: 10_000 },
 
@@ -59,8 +48,8 @@ export default defineConfig({
   ],
 
   use: {
-    baseURL: config.ui.baseUrl,
-    headless: config.run.headless,
+    baseURL: config.uiBaseUrl,
+    headless: config.headless,
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
     screenshot: 'only-on-failure',
@@ -69,7 +58,7 @@ export default defineConfig({
     actionTimeout: 15_000,
     navigationTimeout: 30_000,
     launchOptions: {
-      slowMo: config.run.slowMo,
+      slowMo: config.slowMo,
       args: ['--disable-dev-shm-usage'],
     },
   },
@@ -87,7 +76,7 @@ export default defineConfig({
       name: 'api',
       grep: /@api/,
       use: {
-        baseURL: config.api.baseUrl,
+        baseURL: config.apiBaseUrl,
         extraHTTPHeaders: { Accept: 'application/json' },
       },
     },

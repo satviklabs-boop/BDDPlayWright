@@ -161,10 +161,9 @@ BDDPlayWright/
 │   ├── pages/                  # 3. Page objects (actions)
 │   │   └── LoginPage.ts
 │   ├── locators/               # 4. Selectors, one CSV per page (name,selector)
-│   │   ├── Login.csv
-│   │   ├── Account.csv
-│   │   └── Customer.csv
+│   │   └── Login.csv
 │   └── Routine/                # 5. Shared code
+│       ├── config.ts           #    URLs + run settings (reads .env)
 │       ├── GenericFunction.ts  #    readLocators() + reusable actions (click, enterText...)
 │       ├── fixtures.ts         #    Given/When/Then + fixtures
 │       ├── retry-analyser.ts   #    flaky vs failed report
@@ -267,25 +266,26 @@ When('I click login', async ({ genericFunction, loginPage }) => {
 
 ## Configuration
 
-All configuration flows through `.env` -> `playwright.config.ts`.
+All URLs and settings are in **`tests/Routine/config.ts`**. `playwright.config.ts` and the
+retry analyser both read from it.
+
+To change a value without editing code, copy `.env.example` to `.env` and set it there:
 
 | Variable | Default | Description |
 |---|---|---|
-| `ENV` | `dev` | Environment name |
 | `BASE_URL` | `https://the-internet.herokuapp.com` | UI base URL |
-|UI_USERNAME` | `tomsmith` | Valid UI username |
-| `UI_PASSWORD` | `SuperSecretPassword!` | Valid UI password |
 | `API_BASE_URL` | `https://reqres.in` | API base URL |
-| `API_KEY` | `reqres-free-v1` | API key header |
-| `API_USERNAME` | `eve.holt@reqres.in` | API login email |
-| `API_PASSWORD` | `cityslicka` | API login password |
 | `HEADLESS` | `true` | Run browsers headless |
 | `WORKERS` | `2` | Parallel workers |
-| `RETRIES` | `1` | Retries on failure |
-| `DEFAULT_TIMEOUT` | `30000` | Test timeout (ms) |
-| `SLOW_MO` | `0` | Slow down actions (ms) |
+| `RETRIES` | `1` | Retries on failure (0 = off) |
+| `SLOW_MO` | `0` | Slow down browser actions (ms) |
+| `ANALYSE_RETRIES` | `true` | Run the retry analyser after the tests |
+| `FAIL_ON_FLAKY` | `false` | Fail the build if a test passed only on retry |
 
-> `.env` is git-ignored. Never commit real credentials — use CI secrets in production.
+Pages and steps only hold paths (`/login`, `/api/users`), and the base URL is added in front, so
+switching environments means changing `BASE_URL` / `API_BASE_URL` only.
+
+> `.env` is git-ignored. Test data (usernames, passwords) lives in the feature files' `Examples:` tables.
 
 ---
 
@@ -495,8 +495,8 @@ npm run bddgen && npx playwright test
 ```
 (`npm test` already does both.)
 
-**API tests fail with 401/403**
-Your API key may have expired. Request a free key at [reqres.in](https://reqres.in) and set `API_KEY` in `.env`.
+**API tests fail with 429**
+`reqres.in` is rate-limiting you after many runs in a short time. Wait and re-run.
 
 ---
 

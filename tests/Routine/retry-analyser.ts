@@ -14,10 +14,10 @@
  */
 
 import fs from 'node:fs';
-import 'dotenv/config';
+import { config } from './config.js';
 
-const enabled = (process.env.ANALYSE_RETRIES ?? 'true') === 'true';
-const failOnFlaky = process.env.FAIL_ON_FLAKY === 'true';
+const enabled = config.analyseRetries;
+const failOnFlaky = config.failOnFlaky;
 
 const REPORT_FILE = 'test-results/results.json';
 const OUTPUT_DIR = 'test-results/retry';
