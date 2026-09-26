@@ -160,8 +160,9 @@ BDDPlayWright/
 │   │   └── api.steps.ts
 │   ├── pages/                  # 3. Page objects (locators + actions)
 │   │   └── LoginPage.ts
-│   └── support/                # 4. Plumbing
-│       ├── fixtures.ts         #    Given/When/Then, page fixtures, test data
+│   └── Routine/                # 4. Shared code
+│       ├── GenericFunction.ts  #    reusable actions (click, enterText, getText...)
+│       ├── fixtures.ts         #    Given/When/Then + fixtures
 │       ├── retry-analyser.ts   #    flaky vs failed report
 │       └── run-tests.mjs       #    runs tests, then the analyser
 │
@@ -206,7 +207,7 @@ Feature: User login
 In `tests/steps/`:
 
 ```typescript
-import { When } from '../support/fixtures.js';
+import { When } from '../Routine/fixtures.js';
 
 When('I login with username {string} and password {string}', async ({ loginPage }, username: string, password: string) => {
   await loginPage.login(username, password);
@@ -231,7 +232,7 @@ export class DashboardPage {
 }
 ```
 
-Then register it as a fixture in `tests/support/fixtures.ts` (one line).
+Then register it as a fixture in `tests/Routine/fixtures.ts` (one line).
 
 ### Using pre-defined fixtures
 
@@ -242,6 +243,13 @@ Every scenario can request these without any setup:
 | `page` | Playwright `Page` | Browser page |
 | `request` | Playwright `APIRequestContext` | HTTP client |
 | `loginPage` | `LoginPage` | UI login page object |
+| `genericFunction` | `GenericFunction` | Reusable actions: `navigateTo`, `click`, `enterText`, `getText`, `selectByText`, `isVisible`, `waitForPageLoad`, `getCurrentUrl`, `takeScreenshot` |
+
+```typescript
+When('I click login', async ({ genericFunction, loginPage }) => {
+  await genericFunction.click(loginPage.loginButton);
+});
+```
 
 
 ---
@@ -373,7 +381,7 @@ ANALYSE_RETRIES=false npm test   # skip the analyser entirely
 first failing test, so the analyser would be skipped **precisely when its verdict
 matters most** - telling flaky (passed on retry) apart from genuinely broken.
 
-The sequencing lives in `tests/support/run-tests.mjs` instead. Two reasons:
+The sequencing lives in `tests/Routine/run-tests.mjs` instead. Two reasons:
 
 - `&&` skips the analyser on failure, as above.
 - `;` fixes that on bash, but on Windows the command runs through `cmd`, where

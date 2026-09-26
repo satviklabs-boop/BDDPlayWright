@@ -7,10 +7,14 @@
  */
 import { test as base, createBdd } from 'playwright-bdd';
 import { LoginPage } from '../pages/LoginPage.js';
+import { GenericFunction } from './GenericFunction.js';
 
-export const test = base.extend<{ loginPage: LoginPage }>({
+export const test = base.extend<{ loginPage: LoginPage; genericFunction: GenericFunction }>({
   loginPage: async ({ page }, use) => {
     await use(new LoginPage(page));
+  },
+  genericFunction: async ({ page }, use) => {
+    await use(new GenericFunction(page));
   },
 });
 

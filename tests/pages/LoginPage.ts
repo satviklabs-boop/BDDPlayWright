@@ -5,7 +5,7 @@
  *
  * Locators are defined right here at the top of the class.
  * To add a new page: copy this file, change the locators and actions,
- * then register it in tests/support/fixtures.ts.
+ * then register it in tests/Routine/fixtures.ts.
  */
 export class LoginPage {
   // ----- Locators -----
