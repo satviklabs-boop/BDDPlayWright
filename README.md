@@ -165,8 +165,7 @@ BDDPlayWright/
 │   │   ├── Account.csv
 │   │   └── Customer.csv
 │   └── Routine/                # 5. Shared code
-│       ├── GenericFunction.ts  #    reusable actions (click, enterText, getText...)
-│       ├── LocatorReader.ts    #    reads tests/locators/<Page>.csv
+│       ├── GenericFunction.ts  #    readLocators() + reusable actions (click, enterText...)
 │       ├── fixtures.ts         #    Given/When/Then + fixtures
 │       ├── retry-analyser.ts   #    flaky vs failed report
 │       └── run-tests.mjs       #    runs tests, then the analyser
@@ -234,7 +233,7 @@ export class DashboardPage {
   readonly welcomeBanner: Locator;
 
   constructor(private readonly page: Page) {
-    const loc = readLocators('Dashboard');
+    const loc = GenericFunction.readLocators('Dashboard');
     this.welcomeBanner = page.locator(loc.welcomeBanner);
   }
 

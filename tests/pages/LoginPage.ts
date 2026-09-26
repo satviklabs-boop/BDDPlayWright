@@ -1,5 +1,5 @@
 ﻿import { Page, Locator } from '@playwright/test';
-import { readLocators } from '../Routine/LocatorReader.js';
+import { GenericFunction } from '../Routine/GenericFunction.js';
 
 /**
  * LoginPage - actions for the login screen.
@@ -18,7 +18,7 @@ export class LoginPage {
   readonly heading: Locator;
 
   constructor(private readonly page: Page) {
-    const loc = readLocators('Login');
+    const loc = GenericFunction.readLocators('Login');
     this.username = page.locator(loc.usernameField);
     this.password = page.locator(loc.passwordField);
     this.loginButton = page.locator(loc.loginButton);
