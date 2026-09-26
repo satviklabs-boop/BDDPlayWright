@@ -158,10 +158,15 @@ BDDPlayWright/
 │   ├── steps/                  # 2. HOW each Gherkin line runs
 │   │   ├── login.steps.ts
 │   │   └── api.steps.ts
-│   ├── pages/                  # 3. Page objects (locators + actions)
+│   ├── pages/                  # 3. Page objects (actions)
 │   │   └── LoginPage.ts
-│   └── Routine/                # 4. Shared code
+│   ├── locators/               # 4. Selectors, one CSV per page (name,selector)
+│   │   ├── Login.csv
+│   │   ├── Account.csv
+│   │   └── Customer.csv
+│   └── Routine/                # 5. Shared code
 │       ├── GenericFunction.ts  #    reusable actions (click, enterText, getText...)
+│       ├── LocatorReader.ts    #    reads tests/locators/<Page>.csv
 │       ├── fixtures.ts         #    Given/When/Then + fixtures
 │       ├── retry-analyser.ts   #    flaky vs failed report
 │       └── run-tests.mjs       #    runs tests, then the analyser
@@ -216,14 +221,21 @@ When('I login with username {string} and password {string}', async ({ loginPage 
 
 ### 3. Add page objects as needed
 
-In `tests/pages/`. Locators are defined at the top of the class, with no separate locator files:
+Put the selectors in `tests/locators/Dashboard.csv`, one `name,selector` per row:
+
+```csv
+welcomeBanner,.welcome
+```
+
+Then create the page in `tests/pages/` and read the CSV:
 
 ```typescript
 export class DashboardPage {
   readonly welcomeBanner: Locator;
 
   constructor(private readonly page: Page) {
-    this.welcomeBanner = page.locator('.welcome');
+    const loc = readLocators('Dashboard');
+    this.welcomeBanner = page.locator(loc.welcomeBanner);
   }
 
   async open() {

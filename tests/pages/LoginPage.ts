@@ -1,10 +1,11 @@
 ﻿import { Page, Locator } from '@playwright/test';
+import { readLocators } from '../Routine/LocatorReader.js';
 
 /**
- * LoginPage - locators + actions for the login screen.
+ * LoginPage - actions for the login screen.
  *
- * Locators are defined right here at the top of the class.
- * To add a new page: copy this file, change the locators and actions,
+ * Selectors come from tests/locators/Login.csv - a UI change means editing one CSV row.
+ * To add a new page: create tests/locators/<Page>.csv, copy this file,
  * then register it in tests/Routine/fixtures.ts.
  */
 export class LoginPage {
@@ -17,12 +18,13 @@ export class LoginPage {
   readonly heading: Locator;
 
   constructor(private readonly page: Page) {
-    this.username = page.locator('#username');
-    this.password = page.locator('#password');
-    this.loginButton = page.locator('button[type="submit"]');
-    this.flash = page.locator('#flash');
-    this.logout = page.locator('a[href="/logout"]');
-    this.heading = page.locator('h2').first();
+    const loc = readLocators('Login');
+    this.username = page.locator(loc.usernameField);
+    this.password = page.locator(loc.passwordField);
+    this.loginButton = page.locator(loc.loginButton);
+    this.flash = page.locator(loc.flashMessage);
+    this.logout = page.locator(loc.logoutButton);
+    this.heading = page.locator(loc.subheader).first();
   }
 
   // ----- Actions -----
