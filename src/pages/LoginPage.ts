@@ -4,7 +4,7 @@ import { readLocators } from '../locators/locators.js';
 /**
  * LoginPage - everything the login screen can do.
  *
- * Selectors come from Locators/reads_CustomLogin.csv, so a UI change means
+ * Selectors come from Locators/Login.csv, so a UI change means
  * editing one CSV row instead of hunting through this file.
  *
  * To add another page: copy this file, change the page name passed to

@@ -1,7 +1,7 @@
 /**
  * Locators live in plain CSV files under the project-root `Locators/` folder:
  *
- *   Locators/reads_CustomLogin.csv     -> login page
+ *   Locators/Login.csv                 -> login page
  *   Locators/reads_CustomAccount.csv   -> account page
  *   Locators/reads_CustomCustomer.csv  -> customer page
  *
@@ -13,8 +13,8 @@
  * Blank lines and `#` comments are ignored. Only the FIRST comma separates key
  * from selector, so a selector may itself contain commas.
  *
- * To add a page: drop in `reads_Custom<PageName>.csv` and call
- * `readLocators('<PageName>')` once, in your page object. Nothing else to wire.
+ * To add a page: drop in `reads_Custom<PageName>.csv` (or `<PageName>.csv`)
+ * and call `readLocators('<PageName>')` once in your page object.
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -27,14 +27,14 @@ const SUFFIX = '.csv';
 const CACHE: Record<string, Record<string, string>> = {};
 
 /**
- * Reads `Locators/reads_Custom<page>.csv` and returns `{ key: selector }`.
- *
+ * Reads `Locators/<page>.csv` for Login or `Locators/reads_Custom<page>.csv`
+ * for other pages and returns `{ key: selector }`.
  * Keys are lower-cased, so lookups are case-insensitive.
  */
 export function readLocators(page: string): Record<string, string> {
   if (CACHE[page]) return CACHE[page];
 
-  const file = path.join(FOLDER, `${PREFIX}${page}${SUFFIX}`);
+  const file = path.join(FOLDER, page === 'Login' ? 'Login.csv' : `${PREFIX}${page}${SUFFIX}`);
   if (!fs.existsSync(file)) {
     throw new Error(`Locator file not found: ${file}`);
   }
