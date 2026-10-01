@@ -1,14 +1,25 @@
 /**
  * Playwright configuration.
- * URLs and run settings come from tests/Routine/config.ts (which reads .env).
  *
  * Two projects, picked by the tag on each feature file:
  *   - ui-chromium : features tagged @ui  (browser)
  *   - api         : features tagged @api (HTTP only)
  */
+import 'dotenv/config';
 import { defineConfig, devices } from '@playwright/test';
 import { defineBddConfig } from 'playwright-bdd';
-import { config } from './tests/Routine/config.js';
+
+const env = process.env;
+const config = {
+  uiBaseUrl: env.BASE_URL ?? 'https://the-internet.herokuapp.com',
+  apiBaseUrl: env.API_BASE_URL ?? 'https://reqres.in',
+  headless: (env.HEADLESS ?? 'true') === 'true',
+  workers: Number(env.WORKERS) || 2,
+  retries: Number(env.RETRIES ?? 1),
+  slowMo: Number(env.SLOW_MO) || 0,
+  analyseRetries: (env.ANALYSE_RETRIES ?? 'true') === 'true',
+  failOnFlaky: env.FAIL_ON_FLAKY === 'true',
+};
 
 const testDir = defineBddConfig({
   features: 'tests/features/**/*.feature',

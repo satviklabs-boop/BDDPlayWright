@@ -73,7 +73,7 @@ The framework is organised in clear layers, each with a single responsibility:
        |
    fixtures            ->  Dependency injection of the above
        |
-   config              ->  Environment, URLs, credentials
+   config              ->  Environment, URLs, credentials (inline in playwright.config.ts)
 ```
 
 **Key principle:** step definitions stay declarative and locator-free; all selectors live in page objects.
@@ -163,7 +163,6 @@ BDDPlayWright/
 │   ├── locators/               # 4. Selectors, one CSV per page (name,selector)
 │   │   └── Login.csv
 │   └── Routine/                # 5. Shared code
-│       ├── config.ts           #    URLs + run settings (reads .env)
 │       ├── GenericFunction.ts  #    Fixtures() + Given/When/Then + readLocators() + actions
 │       ├── retry-analyser.ts   #    flaky vs failed report
 │       └── run-tests.mjs       #    runs tests, then the analyser
@@ -171,7 +170,7 @@ BDDPlayWright/
 ├── .github/workflows/
 │   └── playwright.yml          # CI pipeline
 │
-├── playwright.config.ts        # Playwright + BDD configuration
+├── playwright.config.ts        # Playwright + BDD configuration (includes config)
 ├── tsconfig.json               # TypeScript configuration
 ├── .env.example                # Environment template
 └── package.json
@@ -280,8 +279,7 @@ When('I click login', async ({ genericFunction, loginPage }) => {
 
 ## Configuration
 
-All URLs and settings are in **`tests/Routine/config.ts`**. `playwright.config.ts` and the
-retry analyser both read from it.
+All URLs and settings are in **`playwright.config.ts`** (inline config object). The retry analyser reads directly from environment variables.
 
 To change a value without editing code, copy `.env.example` to `.env` and set it there:
 
@@ -296,8 +294,7 @@ To change a value without editing code, copy `.env.example` to `.env` and set it
 | `ANALYSE_RETRIES` | `true` | Run the retry analyser after the tests |
 | `FAIL_ON_FLAKY` | `false` | Fail the build if a test passed only on retry |
 
-Pages and steps only hold paths (`/login`, `/api/users`), and the base URL is added in front, so
-switching environments means changing `BASE_URL` / `API_BASE_URL` only.
+Pages and steps only hold paths (`/login`, `/api/users`), and the base URL is added in front, so switching environments means changing `BASE_URL` / `API_BASE_URL` only.
 
 > `.env` is git-ignored. Test data (usernames, passwords) lives in the feature files' `Examples:` tables.
 
