@@ -34,7 +34,7 @@ function run(command, { inherit = true } = {}) {
 }
 
 console.log('--- Running the BDD suite ---');
-const tests = run('playwright test');
+const tests = run('npx playwright test');
 const testExit = tests.status ?? 1;
 
 if (testExit !== 0) {

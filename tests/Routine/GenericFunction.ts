@@ -125,6 +125,24 @@ export class GenericFunction {
   async takeScreenshot(name: string) {
     await this.page.screenshot({ path: `test-results/screenshots/${name}.png`, fullPage: true });
   }
+
+  /**
+   * Get a date string in YYYY-MM-DD format.
+   * @param offset - 'currentdate' for today, 'currentdate-1' for yesterday, 'currentdate+2' for 2 days ahead, etc.
+   */
+  static dateFill(offset: string): string {
+    const match = offset.match(/^currentdate([+-]\d+)?$/i);
+    if (!match) {
+      throw new Error(`Invalid date offset: "${offset}". Use 'currentdate', 'currentdate-1', 'currentdate+2', etc.`);
+    }
+    const days = match[1] ? parseInt(match[1], 10) : 0;
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 }
 
 // ===================== Step keywords =====================
