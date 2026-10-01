@@ -56,3 +56,9 @@ Then('I should be redirected back to the login page', async ({ page }) => {
 Then('the password field should be masked', async ({ loginPage }) => {
   await expect(loginPage.password).toHaveAttribute('type', 'password');
 });
+
+Then('the page should be rendered for a mobile viewport', async ({ page }) => {
+  const size = page.viewportSize();
+  expect(size).not.toBeNull();
+  expect(size!.width).toBeLessThanOrEqual(414);
+});

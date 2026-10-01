@@ -52,11 +52,11 @@ Feature: User login
       | username | password             |
       | tomsmith | SuperSecretPassword! |
 
-  @regression @edge
-  Scenario Outline: Password input masks the entered value
-    When I enter the password "<password>"
-    Then the password field should be masked
+   @regression @edge
+   Scenario Outline: Password input masks the entered value
+     When I enter the password "<password>"
+     Then the password field should be masked
 
-    Examples:
-      | password             |
-      | SuperSecretPassword! |
+     Examples:
+       | password             |
+       | SuperSecretPassword! |

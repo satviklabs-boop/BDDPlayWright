@@ -84,6 +84,14 @@ export default defineConfig({
       },
     },
     {
+      name: 'ui-mobile',
+      grep: /@mobile/,
+      use: {
+        ...devices['Pixel 5'],
+        channel: 'chromium',
+      },
+    },
+    {
       name: 'api',
       grep: /@api/,
       use: {

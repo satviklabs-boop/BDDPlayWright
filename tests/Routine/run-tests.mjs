@@ -23,6 +23,8 @@
  */
 
 import { spawnSync } from 'node:child_process';
+import { readdirSync, renameSync, existsSync } from 'node:fs';
+import path from 'node:path';
 
 /** Run a command through the shell so `npx`/`.cmd` shims resolve on Windows. */
 function run(command, { inherit = true } = {}) {
@@ -36,6 +38,15 @@ function run(command, { inherit = true } = {}) {
 console.log('--- Running the BDD suite ---');
 const tests = run('npx playwright test');
 const testExit = tests.status ?? 1;
+
+const reportDir = 'playwright-report';
+const defaultReport = path.join(reportDir, 'index.html');
+if (existsSync(defaultReport)) {
+  const ts = new Date().toISOString().replace(/T/, '_').replace(/[:.]/g, '-').slice(0, 19);
+  const stampedReport = path.join(reportDir, `${ts}.html`);
+  renameSync(defaultReport, stampedReport);
+  console.log(`Renamed report to ${ts}.html`);
+}
 
 if (testExit !== 0) {
   console.log(`\n--- Suite exited with ${testExit}; running the retry analyser anyway ---`);
