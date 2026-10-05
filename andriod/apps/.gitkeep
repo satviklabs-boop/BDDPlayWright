@@ -1,0 +1,3 @@
+# Put your Android .apk file in this folder and point APP_PATH at it, e.g.
+#   APP_PATH=./andriod/apps/app-debug.apk
+# .apk files themselves are git-ignored.

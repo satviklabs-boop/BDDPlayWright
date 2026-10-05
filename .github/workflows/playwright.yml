@@ -52,10 +52,11 @@ jobs:
           fi
       # Allure is the extended report for this stack (Extent Reports is a
       # Java/Cucumber-JVM tool and cannot run on Node). Generating it in the
-      # same job keeps the report beside the run that produced it.
+      # same job keeps the report beside the run that produced it. The script
+      # writes a timestamped folder per run plus an `allure-report/latest` copy.
       - name: Generate Allure report
         if: always()
-        run: npx allure generate allure-results --clean -o allure-report
+        run: node tests/Routine/build-allure.mjs
       - name: Upload Playwright HTML report
         if: always()
         uses: actions/upload-artifact@v4

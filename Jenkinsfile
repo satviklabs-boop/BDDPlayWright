@@ -183,7 +183,8 @@ pipeline {
         stage('Generate Allure report') {
             steps {
                 echo '--- Building the Allure report ---'
-                sh 'npx allure generate allure-results --clean -o allure-report'
+                // Timestamped folder per run + a stable allure-report/latest copy.
+                sh 'node tests/Routine/build-allure.mjs'
             }
         }
 

@@ -1,0 +1,39 @@
+{
+  "name": "bdd-appium-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Android app test automation with WebdriverIO + Appium + Cucumber BDD (separate from the Playwright suite)",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node Routine/run-tests.mjs",
+    "test:raw": "wdio run wdio.conf.ts",
+    "test:smoke": "wdio run wdio.conf.ts --cucumberOpts.tags=@smoke",
+    "test:regression": "wdio run wdio.conf.ts --cucumberOpts.tags=@regression",
+    "test:positive": "wdio run wdio.conf.ts --cucumberOpts.tags=@positive",
+    "test:negative": "wdio run wdio.conf.ts --cucumberOpts.tags=@negative",
+    "report": "allure open allure-report/latest",
+    "report:latest": "allure open allure-report/latest",
+    "report:serve": "allure serve allure-results",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "appium:start": "appium",
+    "appium:doctor": "appium-doctor --android",
+    "devices": "adb devices"
+  },
+  "devDependencies": {
+    "@wdio/appium-service": "^9.0.0",
+    "@wdio/cli": "^9.0.0",
+    "@wdio/cucumber-framework": "^9.0.0",
+    "@wdio/local-runner": "^9.0.0",
+    "@wdio/spec-reporter": "^9.0.0",
+    "@wdio/allure-reporter": "^9.0.0",
+    "allure-commandline": "^2.46.1",
+    "appium": "^2.11.0",
+    "appium-uiautomator2-driver": "^3.9.0",
+    "dotenv": "^16.4.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.0"
+  }
+}

@@ -160,10 +160,10 @@ BDDPlayWright/
 │   │   └── api.steps.ts
 │   ├── pages/                  # 3. Page objects (actions)
 │   │   └── LoginPage.ts
-│   ├── locators/               # 4. Selectors, one CSV per page (name,selector)
-│   │   └── Login.csv
+│   ├── locators/               # 4. Selectors, readable getByRole/getByLabel/getByText
+│   │   └── Locators.ts
 │   └── Routine/                # 5. Shared code
-│       ├── GenericFunction.ts  #    Fixtures() + Given/When/Then + readLocators() + actions
+│       ├── GenericFunction.ts  #    Fixtures() + Given/When/Then + actions
 │       ├── retry-analyser.ts   #    flaky vs failed report
 │       └── run-tests.mjs       #    runs tests, then the analyser
 │
@@ -217,21 +217,28 @@ When('I login with username {string} and password {string}', async ({ loginPage 
 
 ### 3. Add page objects as needed
 
-Put the selectors in `tests/locators/Dashboard.csv`, one `name,selector` per row:
+Selectors live in `tests/locators/Locators.ts`, written with Playwright's
+readable `getByRole` / `getByLabel` / `getByText` locators. Add one class per page:
 
-```csv
-welcomeBanner,.welcome
+```typescript
+export class DashboardLocators {
+  readonly welcomeBanner: Locator;
+
+  constructor(page: Page) {
+    this.welcomeBanner = page.getByRole('heading', { name: 'Welcome' });
+  }
+}
 ```
 
-Then create the page in `tests/pages/` and read the CSV:
+Then the page object just consumes them:
 
 ```typescript
 export class DashboardPage {
   readonly welcomeBanner: Locator;
 
   constructor(private readonly page: Page) {
-    const loc = GenericFunction.readLocators('Dashboard');
-    this.welcomeBanner = page.locator(loc.welcomeBanner);
+    const loc = new DashboardLocators(page);
+    this.welcomeBanner = loc.welcomeBanner;
   }
 
   async open() {
@@ -239,6 +246,12 @@ export class DashboardPage {
   }
 }
 ```
+
+> **Why not a CSV of CSS selectors?** `getByRole('button', { name: 'Login' })`
+says *what the user sees*, survives a class/id rename, and Playwright's
+accessibility engine verifies the element is reachable the way a real user would
+reach it. A bare `button[type="submit"]` says none of that, and breaks silently
+when the markup is refactored.
 
 Then register it in `GenericFunction.Fixtures()` in `tests/Routine/GenericFunction.ts`:
 
@@ -304,14 +317,31 @@ Pages and steps only hold paths (`/login`, `/api/users`), and the base URL is ad
 
 After a run you get:
 
+Every report is timestamped, so successive runs never overwrite each other:
+
 | Report | Path | Command |
 |---|---|---|
-| **Allure** (extended report) | `allure-report/index.html` | `npm run report:allure` |
-| **Playwright HTML** | `playwright-report/index.html` | `npm run report` |
+| **Allure** (extended report) | `allure-report/<date>_<time>/index.html` | `npm run report:allure` |
+| **Playwright HTML** | `playwright-report/<date>_<time>.html` | `npm run report` |
 | **Retry analyser** | `test-results/retry/retry-report.txt` | `npm run retry:analyse` |
 | **JSON results** | `test-results/results.json` | - |
 | **JUnit XML** | `test-results/junit.xml` | - |
 | **On failure** | screenshot, video, trace | - |
+
+Both folders also keep a stable `latest` pointer, so you do not need to hunt for
+the newest file:
+
+```
+playwright-report/
+  2026-10-05_14-32-07.html
+  2026-10-05_15-01-44.html
+allure-report/
+  2026-10-05_14-32-07/   <- one folder per run
+  latest/                <- copy of the newest run
+```
+
+`npm run report` opens the newest Playwright report; `npm run allure:open`
+opens `allure-report/latest`.
 
 ### Allure - the extended report
 

@@ -42,7 +42,13 @@ const testExit = tests.status ?? 1;
 const reportDir = 'playwright-report';
 const defaultReport = path.join(reportDir, 'index.html');
 if (existsSync(defaultReport)) {
-  const ts = new Date().toISOString().replace(/T/, '_').replace(/[:.]/g, '-').slice(0, 19);
+  // Local date+time (not toISOString, which is UTC) so the filename matches the
+  // clock on the machine that ran the suite: <date>_<HH-MM-SS>.html
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const ts =
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+    `_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
   const stampedReport = path.join(reportDir, `${ts}.html`);
   renameSync(defaultReport, stampedReport);
   console.log(`Renamed report to ${ts}.html`);

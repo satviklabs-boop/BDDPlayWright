@@ -1,17 +1,17 @@
 import { Page, Locator } from '@playwright/test';
 import { test as base, createBdd } from 'playwright-bdd';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
 import { LoginPage } from '../pages/LoginPage.js';
 
 /**
  * GenericFunction - everything shared by all pages and steps:
  *   1. Fixtures()      - the objects every step can ask for (loginPage, genericFunction)
- *   2. readLocators()  - reads selectors from tests/locators/<Page>.csv
- *   3. browser actions - click, enterText, getText, ...
+ *   2. browser actions - click, enterText, getText, ...
+ *
+ * Locators live in tests/locators/Locators.ts, written the readable way with
+ * getByRole / getByLabel / getByText. Pages build them; steps just use them.
  *
  * Usage in a step file:  import { Given, When, Then } from '../Routine/GenericFunction.js';
- * Usage in a page:       const loc = GenericFunction.readLocators('Login');
+ * Usage in a page:       const loc = new LoginLocators(page);
  * Usage in a step:       await genericFunction.click(loginPage.loginButton);
  */
 export class GenericFunction {
@@ -35,43 +35,6 @@ export class GenericFunction {
       },
       genericFunction: async ({ page }, use) => {
         await use(new GenericFunction(page));
-      },
-    });
-  }
-
-  // ===================== Locators =====================
-
-  /**
-   * Reads tests/locators/<pageName>.csv and returns { name: selector }.
-   *
-   * Each row is:  name,selector        e.g.  loginButton,button[type="submit"]
-   * Blank lines and lines starting with # are ignored.
-   * Only the FIRST comma splits the row, so selectors may contain commas.
-   */
-  static readLocators(pageName: string): Record<string, string> {
-    const file = path.join('tests', 'locators', `${pageName}.csv`);
-    if (!fs.existsSync(file)) {
-      throw new Error(`Locator file not found: ${file}`);
-    }
-
-    const locators: Record<string, string> = {};
-    for (const line of fs.readFileSync(file, 'utf-8').split(/\r?\n/)) {
-      const row = line.trim();
-      if (row === '' || row.startsWith('#')) continue;
-
-      const comma = row.indexOf(',');
-      if (comma < 1) throw new Error(`Bad row in ${file}: "${row}" (expected name,selector)`);
-      locators[row.slice(0, comma).trim()] = row.slice(comma + 1).trim();
-    }
-
-    // Fail fast on a typo like loc.loginButon instead of passing `undefined` to Playwright.
-    return new Proxy(locators, {
-      get(target, key) {
-        if (typeof key !== 'string') return undefined;
-        if (!(key in target)) {
-          throw new Error(`Locator "${key}" not found in ${file}. Available: ${Object.keys(target).join(', ')}`);
-        }
-        return target[key];
       },
     });
   }

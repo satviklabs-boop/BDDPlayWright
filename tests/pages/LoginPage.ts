@@ -1,12 +1,16 @@
-﻿import { Page, Locator } from '@playwright/test';
-import { GenericFunction } from '../Routine/GenericFunction.js';
+﻿﻿import { Page, Locator } from '@playwright/test';
+import { LoginLocators } from '../locators/Locators.js';
 
 /**
  * LoginPage - actions for the login screen.
  *
- * Selectors come from tests/locators/Login.csv - a UI change means editing one CSV row.
- * To add a new page: create tests/locators/<Page>.csv, copy this file,
- * then register it in GenericFunction.Fixtures() (tests/Routine/GenericFunction.ts).
+ * Selectors live in tests/locators/Locators.ts and are written with
+ * getByRole / getByLabel / getByText, so they read like the screen itself.
+ * A UI change means editing one readable line there, not a CSS string.
+ *
+ * To add a new page: add a `<Page>Locators` class in Locators.ts, copy this
+ * file, then register it in GenericFunction.Fixtures()
+ * (tests/Routine/GenericFunction.ts).
  */
 export class LoginPage {
   // ----- Locators -----
@@ -18,18 +22,21 @@ export class LoginPage {
   readonly heading: Locator;
 
   constructor(private readonly page: Page) {
-    const loc = GenericFunction.readLocators('Login');
-    this.username = page.locator(loc.usernameField);
-    this.password = page.locator(loc.passwordField);
-    this.loginButton = page.locator(loc.loginButton);
-    this.flash = page.locator(loc.flashMessage);
-    this.logout = page.locator(loc.logoutButton);
-    this.heading = page.locator(loc.subheader).first();
+    const loc = new LoginLocators(page);
+    this.username = loc.username;
+    this.password = loc.password;
+    this.loginButton = loc.loginButton;
+    this.flash = loc.flash;
+    this.logout = loc.logout;
+    this.heading = loc.heading;
   }
 
   // ----- Actions -----
   async open() {
-    await this.page.goto('/login');
+    // The public demo host can be slow to respond; 'domcontentloaded' resolves
+    // as soon as the form is parsed, and the locators below auto-wait for the
+    // elements anyway, so there is no need to block on every sub-resource.
+    await this.page.goto('/login', { waitUntil: 'domcontentloaded' });
   }
 
   async login(username: string, password: string) {
