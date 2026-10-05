@@ -155,8 +155,7 @@ andriod/
 ├── features/            # WHAT to test (Gherkin)
 │   └── login.feature    #   same login scenario as the web suite
 ├── steps/               # HOW each Gherkin line runs
-│   ├── login.steps.ts
-│   └── hooks.ts         #   screenshot on failure
+│   └── login.steps.ts
 ├── pages/               # Page objects (actions)
 │   ├── LoginPage.ts
 │   └── SecureAreaPage.ts
@@ -192,9 +191,6 @@ npm run report     # open the newest report (allure-report/latest)
 npm run report:serve   # serve raw results without writing a report
 npm run test:raw   # run the suite only, no report step
 ```
-
-A screenshot is attached automatically when a scenario fails
-(`SCREENSHOT_ON_FAILURE=true`).
 
 ---
 
